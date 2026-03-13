@@ -1,0 +1,14 @@
+{
+  "name": "commodity-tracker",
+  "version": "1.0.0",
+  "description": "Electronics & Appliances Commodity Price Tracker",
+  "scripts": {
+    "dev": "netlify dev"
+  },
+  "dependencies": {
+    "@netlify/blobs": "^7.0.0"
+  },
+  "devDependencies": {
+    "@netlify/functions": "^2.0.0"
+  }
+}
