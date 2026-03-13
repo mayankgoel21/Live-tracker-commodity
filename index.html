@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Commodity Tracker — Electronics & Appliances</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0c0f;--bg2:#111318;--bg3:#181c23;--bg4:#1e2330;
+  --border:#252b38;--border2:#2e3647;
+  --text:#dce3f0;--text2:#7e8fa8;--text3:#4a566a;
+  --accent:#4f9eff;--accent2:#2563eb;
+  --green:#22c55e;--red:#ef4444;--amber:#f59e0b;
+  --r:8px;--r2:12px
+}
+html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;font-size:14px}
+.topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:54px;gap:16px;flex-wrap:wrap;flex-shrink:0}
+.logo{font-size:15px;font-weight:700;letter-spacing:-.3px}.logo span{color:var(--accent)}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.status-pill{display:inline-flex;align-items:center;gap:5px;background:var(--bg3);border:1px solid var(--border2);border-radius:20px;padding:3px 10px;font-size:11px;color:var(--text2);font-family:'IBM Plex Mono',monospace}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--text3);display:inline-block;flex-shrink:0}
+.dot.live{background:var(--green);animation:blink 2s infinite}
+.dot.loading{background:var(--amber);animation:blink .5s infinite}
+.dot.error{background:var(--red)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+.last-lbl{font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace}
+.info-bar{background:#0d1a2e;border-bottom:1px solid #2563eb44;padding:9px 24px;display:flex;align-items:flex-start;gap:10px;font-size:12px;color:#93c5fd;line-height:1.6}
+.info-bar.hidden{display:none}
+.info-bar button{margin-left:auto;background:none;border:none;color:#4a566a;cursor:pointer;font-size:17px;line-height:1;flex-shrink:0;padding:0 4px}
+.alert-bar{background:#1a1500;border-bottom:1px solid #f59e0b44;padding:7px 24px;font-size:12px;color:var(--amber)}
+.alert-bar.hidden{display:none}
+.controls-row{display:flex;align-items:center;gap:8px;padding:10px 24px;background:var(--bg);border-bottom:1px solid var(--border);flex-wrap:wrap}
+.seg-group{display:flex;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.seg{padding:5px 14px;font-size:11px;font-weight:600;cursor:pointer;background:transparent;border:none;color:var(--text2);font-family:'Syne',sans-serif;transition:all .15s;white-space:nowrap}
+.seg.active{background:var(--bg4);color:var(--accent)}
+.sep{width:1px;background:var(--border)}
+.filter-lbl{font-size:11px;color:var(--text3);margin-left:8px;margin-right:2px}
+.chip{padding:4px 11px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text2);transition:all .15s;font-family:'Syne',sans-serif}
+.chip.active{color:var(--accent);border-color:var(--accent2);background:#0d1f3d}
+.ml{margin-left:auto}
+.refresh-btn{display:flex;align-items:center;gap:5px;padding:5px 14px;border-radius:var(--r);background:var(--bg3);border:1px solid var(--border2);color:var(--text2);cursor:pointer;font-size:11px;font-weight:600;font-family:'Syne',sans-serif;transition:all .15s}
+.refresh-btn:hover{color:var(--text);border-color:var(--accent)}
+.refresh-btn.spin svg{animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.summary-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--border);border-bottom:1px solid var(--border)}
+.s-cell{background:var(--bg);padding:11px 20px}
+.s-lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:3px;font-family:'IBM Plex Mono',monospace}
+.s-val{font-size:18px;font-weight:700;font-family:'IBM Plex Mono',monospace}
+.s-sub{font-size:10px;color:var(--text2);margin-top:1px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(195px,1fr));gap:1px;background:var(--border)}
+.c-card{background:var(--bg2);padding:15px;cursor:pointer;transition:background .12s;position:relative;border-bottom:2px solid transparent}
+.c-card:hover{background:var(--bg3)}
+.c-card.sel{background:var(--bg3);border-bottom-color:var(--accent)}
+.c-card.alt{border-bottom-color:var(--amber)}
+.c-card.sel.alt{border-bottom-color:var(--amber)}
+.card-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;gap:4px}
+.card-name{font-size:12px;font-weight:700;color:var(--text);line-height:1.3}
+.tag{font-size:9px;padding:2px 5px;border-radius:4px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;flex-shrink:0;font-family:'IBM Plex Mono',monospace}
+.t-base{background:#0d1f33;color:#60a5fa}
+.t-specialty{background:#1a1233;color:#a78bfa}
+.t-plastic{background:#1f1208;color:#fb923c}
+.t-thermal{background:#071a10;color:#4ade80}
+.t-appliance{background:#1f0a0a;color:#f87171}
+.price-big{font-size:20px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--text);line-height:1}
+.price-unit{font-size:10px;color:var(--text3);margin-top:2px;font-family:'IBM Plex Mono',monospace;display:flex;align-items:center;gap:5px}
+.src-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.src-live{background:var(--green)}.src-cached{background:var(--amber)}.src-seed{background:var(--text3)}
+.chg-row{display:flex;align-items:center;gap:5px;margin-top:9px}
+.chg{font-size:11px;font-weight:600;font-family:'IBM Plex Mono',monospace}
+.chg.up{color:var(--red)}.chg.dn{color:var(--green)}.chg.flat{color:var(--text3)}
+.chg-lbl{font-size:10px;color:var(--text3)}
+.spark{height:26px;width:100%;margin-top:7px}
+.alert-dot{position:absolute;top:9px;right:9px;width:6px;height:6px;border-radius:50%;background:var(--amber)}
+.detail{background:var(--bg2);border-top:1px solid var(--border);padding:22px 24px}
+.det-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px}
+.det-title{font-size:15px;font-weight:700}
+.det-meta{font-size:11px;color:var(--text2);margin-top:3px}
+.range-tabs{display:flex;gap:3px}
+.rt{padding:4px 12px;font-size:11px;font-weight:600;border-radius:6px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text2);font-family:'Syne',sans-serif;transition:all .15s}
+.rt.active{color:var(--accent);border-color:var(--accent2);background:var(--bg4)}
+.chart-wrap{position:relative;height:195px;width:100%;margin-bottom:18px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:8px;margin-bottom:14px}
+.kpi{background:var(--bg3);border-radius:var(--r);padding:11px 13px}
+.kpi-lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;font-family:'IBM Plex Mono',monospace}
+.kpi-val{font-size:15px;font-weight:700;font-family:'IBM Plex Mono',monospace}
+.context{background:var(--bg3);border-left:3px solid var(--accent2);border-radius:0 var(--r) var(--r) 0;padding:11px 15px;font-size:12px;color:var(--text2);line-height:1.6}
+.sched-bar{background:var(--bg2);border-top:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.sched-info{display:flex;align-items:center;gap:12px}
+.sched-icon{width:30px;height:30px;border-radius:var(--r);background:var(--bg4);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sched-text strong{font-size:12px;font-weight:600;display:block}
+.sched-text span{font-size:11px;color:var(--text2)}
+.sched-actions{display:flex;gap:8px}
+.btn{padding:7px 16px;border-radius:var(--r);border:none;cursor:pointer;font-family:'Syne',sans-serif;font-weight:600;font-size:12px;transition:all .15s}
+.btn-primary{background:var(--accent2);color:#fff}.btn-primary:hover{background:#1d4ed8}
+.btn-sec{background:var(--bg3);color:var(--text2);border:1px solid var(--border2)}.btn-sec:hover{color:var(--text)}
+#toast{position:fixed;bottom:22px;right:22px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:9px 15px;font-size:12px;color:var(--text);z-index:2000;opacity:0;transform:translateY(6px);transition:all .2s;pointer-events:none}
+#toast.show{opacity:1;transform:translateY(0)}
+</style>
+</head>
+<body>
+<div id="toast"></div>
+
+<div class="topbar">
+  <div class="logo">Commodity<span>Track</span></div>
+  <div class="topbar-right">
+    <div class="status-pill"><span class="dot" id="sdot"></span><span id="stxt">Loading…</span></div>
+    <span class="last-lbl" id="last-lbl"></span>
+    <button class="refresh-btn" id="rbtn" onclick="loadPrices(true)" style="margin-left:4px">
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M13.5 8A5.5 5.5 0 112.9 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M2.5 2v3h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Refresh
+    </button>
+  </div>
+</div>
+
+<div class="info-bar" id="info-bar">
+  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="flex-shrink:0;margin-top:2px"><circle cx="8" cy="8" r="6.5" stroke="#93c5fd" stroke-width="1.3"/><path d="M8 7v4M8 5.5v.5" stroke="#93c5fd" stroke-width="1.3" stroke-linecap="round"/></svg>
+  <span><strong>Fully automated.</strong> A Netlify scheduled function fetches fresh LME prices from the IMF on the 1st and 15th of every month — no manual action needed. This page always shows the latest stored data.</span>
+  <button onclick="document.getElementById('info-bar').classList.add('hidden')">×</button>
+</div>
+
+<div class="alert-bar hidden" id="alert-bar"></div>
+
+<div class="controls-row">
+  <div class="seg-group">
+    <button class="seg active" onclick="setSector('all',this)">All (16)</button>
+    <div class="sep"></div>
+    <button class="seg" onclick="setSector('electronics',this)">Electronics</button>
+    <div class="sep"></div>
+    <button class="seg" onclick="setSector('appliances',this)">Appliances</button>
+    <div class="sep"></div>
+    <button class="seg" onclick="setSector('shared',this)">Shared</button>
+  </div>
+  <span class="filter-lbl">Type:</span>
+  <button class="chip active" onclick="setTag('all',this)">All</button>
+  <button class="chip" onclick="setTag('base',this)">Base metals</button>
+  <button class="chip" onclick="setTag('specialty',this)">Specialty</button>
+  <button class="chip" onclick="setTag('plastic',this)">Plastics</button>
+  <button class="chip" onclick="setTag('thermal',this)">Insulation</button>
+  <button class="chip" onclick="setTag('appliance',this)">Components</button>
+  <div class="ml"></div>
+</div>
+
+<div class="summary-row" id="summary-row"></div>
+<div class="grid" id="grid"></div>
+<div class="detail" id="detail"></div>
+
+<div class="sched-bar">
+  <div class="sched-info">
+    <div class="sched-icon">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="11" rx="2" stroke="#4f9eff" stroke-width="1.3"/><path d="M5 1v2M11 1v2M2 7h12" stroke="#4f9eff" stroke-width="1.3" stroke-linecap="round"/></svg>
+    </div>
+    <div class="sched-text">
+      <strong id="next-lbl">Next auto-fetch: 1st or 15th of the month</strong>
+      <span id="sched-sub">Netlify scheduled function · IMF PCPS · No manual action needed</span>
+    </div>
+  </div>
+  <div class="sched-actions">
+    <button class="btn btn-sec" onclick="addCalendar()">+ Share link</button>
+    <button class="btn btn-primary" onclick="loadPrices(true)">Fetch now</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const COMMODITIES = [
+  {id:'copper',name:'Copper',tag:'base',sectors:['shared'],unit:'USD/MT',note:'PCB wiring, motor windings, compressors. Key BOM driver for HVAC & washing machines. Hit record $13,270/t in Jan 2026 on tariff speculation. Verify cost-up claims against monthly LME average.',alert:false},
+  {id:'aluminium',name:'Aluminium',tag:'base',sectors:['shared'],unit:'USD/MT',note:'Appliance chassis, AC condenser fins, heat sinks, TV frames. Up ~12% in 2025. US 25% tariff drives Midwest premium. Challenge claims above LME average.',alert:false},
+  {id:'steel',name:'Steel (HRC)',tag:'base',sectors:['appliances'],unit:'USD/MT',note:'Washing machine cabinets, refrigerator panels, oven cavities. Down ~16% from Mar 2024. Weak China property + overcapacity. Excellent time to lock long-term contracts.',alert:false},
+  {id:'stainless',name:'Stainless 304',tag:'base',sectors:['appliances'],unit:'USD/MT',note:'Refrigerator liners, oven racks, washing machine drums. Nickel weakness + China overcapacity drove prices down. Watch nickel recovery — SS304 may firm.',alert:false},
+  {id:'zinc',name:'Zinc',tag:'base',sectors:['appliances'],unit:'USD/MT',note:'Galvanising steel for washing machines, fridges, ACs. Up ~20% vs 2024. Zinc surplus forecast 2026-27 may bring relief.',alert:false},
+  {id:'tin',name:'Tin',tag:'base',sectors:['electronics'],unit:'USD/MT',note:'PCB solder — essential for ALL consumer electronics. Myanmar ore exports down 70.7% in 2025. Hit record $56,800/t Jan 2026. Genuine verified cost driver — do not challenge without solder volume analysis.',alert:true},
+  {id:'nickel',name:'Nickel',tag:'specialty',sectors:['shared'],unit:'USD/MT',note:'Stainless steel alloying, NMC battery cathodes. Indonesia cut mining permits — first genuine supply response. Recovered to ~$17,000 in Mar 2026.',alert:false},
+  {id:'copper_wire',name:'Enamelled Cu Wire',tag:'appliance',sectors:['appliances'],unit:'USD/MT',note:'Motor windings in washing machines, AC compressors, refrigerator compressors. Tracks LME copper + ~20% fabrication premium. Biggest appliance BOM cost after steel.',alert:false},
+  {id:'ndpr',name:'NdPr Oxide',tag:'specialty',sectors:['shared'],unit:'USD/kg',note:'Permanent magnets in inverter AC compressors, variable-speed motors. China controls ~85% supply. Export licensing tightened Dec 2024. Build 3-6 month buffer.',alert:true},
+  {id:'lithium',name:'Lithium Carbonate',tag:'specialty',sectors:['electronics'],unit:'USD/kg',note:'Battery packs in laptops, phones, cordless appliances. Down ~87% from 2022 peak. Structurally oversupplied. Challenge any lithium cost-up claims firmly.',alert:false},
+  {id:'cobalt',name:'Cobalt',tag:'specialty',sectors:['electronics'],unit:'USD/kg',note:'NMC battery cathodes, hard drive coatings. Down ~25% as EV makers shift to LFP chemistry. Market trend firmly bearish.',alert:false},
+  {id:'abs',name:'ABS Resin',tag:'plastic',sectors:['shared'],unit:'USD/MT',note:'Appliance housings, washing machine lids, fridge panels, TV back covers. China dominant producer. Tracks crude + acrylonitrile. Fluctuations <10% normal.',alert:false},
+  {id:'pvc',name:'PVC Resin',tag:'plastic',sectors:['appliances'],unit:'USD/MT',note:'Wire/cable insulation, door gaskets, flexible hoses. Soft China construction dragged prices lower. Good entry for annual contracts.',alert:false},
+  {id:'pp',name:'Polypropylene (PP)',tag:'plastic',sectors:['shared'],unit:'USD/MT',note:'Washing machine drums, dishwasher parts, appliance connectors. Most price-stable plastic. Low volatility makes PP a reliable BOM anchor.',alert:false},
+  {id:'hips',name:'HIPS',tag:'plastic',sectors:['appliances'],unit:'USD/MT',note:'Refrigerator door liners, inner cabinet walls, AC panels. Tracks styrene/benzene feedstock. Very stable pricing.',alert:false},
+  {id:'pur_foam',name:'Polyurethane Foam',tag:'thermal',sectors:['appliances'],unit:'USD/MT',note:'Rigid PUR foam in refrigerator & freezer walls — determines energy star rating. MDI supply tightened in China 2025. Up ~10% from 2024.',alert:false},
+];
+
+const SEED = {
+  copper:[8800,9500,10100,10200,9800,9100,9200,9150,9200,9300,9400,9100,8800,9200,9300,8900,9000,9400,9500,9600,9600,9800,10200,11000,10200,9800],
+  aluminium:[2350,2400,2450,2460,2420,2380,2380,2390,2390,2420,2450,2500,2550,2560,2520,2350,2400,2600,2680,2700,2750,2800,2850,2900,2950,2850],
+  steel:[580,570,560,550,540,520,510,505,500,490,490,485,480,470,460,450,455,460,465,470,475,480,480,485,490,485],
+  stainless:[2200,2180,2150,2120,2100,2080,2060,2050,2040,2020,2010,2000,1980,1970,1960,1950,1960,1970,1980,2000,2010,2020,2030,2040,2050,2050],
+  zinc:[2700,2720,2750,2780,2700,2650,2700,2750,2780,2800,2750,2800,2850,2900,2900,2850,3000,3100,3150,3200,3250,3300,3350,3400,3300,3250],
+  tin:[29500,30000,31000,32745,31000,30000,30500,31000,31500,32000,32500,33000,33500,34000,34500,35000,36000,37000,38000,39000,40000,42000,52000,47000,44000,41000],
+  nickel:[16800,16500,16200,16000,15800,15500,15400,15200,15000,14800,14900,15000,15100,15000,14900,14800,15000,15100,15200,15300,15100,15080,15100,19000,17173,17343],
+  copper_wire:[10560,11400,12120,12240,11760,10920,11040,10980,11040,11160,11280,10920,10560,11040,11160,10680,10800,11280,11400,11520,11520,11760,12240,13200,12240,11760],
+  ndpr:[62,60,58,57,56,55,54,55,56,57,56,57,58,59,60,60,62,63,64,65,66,68,67,65,63,62],
+  lithium:[13,12,11,10,10,9,9,9,9,9,10,10,10,10,10,10,10,10,10,11,11,11,11,11,11,11],
+  cobalt:[27,26,25,25,24,24,23,23,23,23,24,24,24,24,24,23,23,24,24,25,25,25,24,24,24,24],
+  abs:[1580,1600,1620,1640,1620,1600,1580,1570,1560,1570,1580,1600,1610,1620,1630,1600,1600,1620,1640,1650,1650,1660,1660,1650,1640,1640],
+  pvc:[870,860,850,840,830,820,810,800,790,780,780,780,780,780,790,780,790,800,810,820,820,830,830,825,820,820],
+  pp:[1060,1070,1080,1090,1080,1070,1060,1060,1070,1080,1080,1070,1070,1080,1090,1080,1080,1090,1100,1110,1110,1110,1110,1100,1100,1100],
+  hips:[1300,1310,1320,1330,1320,1310,1305,1300,1300,1305,1310,1315,1320,1330,1340,1330,1330,1340,1350,1360,1360,1360,1360,1355,1350,1350],
+  pur_foam:[1950,1960,1970,1980,1990,1990,1990,2000,2000,2010,2010,2020,2030,2040,2050,2050,2060,2080,2100,2110,2120,2130,2150,2160,2150,2150],
+};
+
+const MONTHS=["Feb'24","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan'25","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan'26","Feb","Mar'26"];
+
+let S={prices:{},fetchedAt:null,sel:'copper',sector:'all',tag:'all',range:24,chart:null};
+
+// Load seed prices as immediate baseline
+function loadSeed(){
+  COMMODITIES.forEach(c=>{
+    S.prices[c.id]={current:SEED[c.id][SEED[c.id].length-1],history:[...SEED[c.id]],source:'seed'};
+  });
+}
+
+async function loadPrices(force=false){
+  setSpinner(true);
+  setStatus('loading','Fetching…');
+  try{
+    const res = await fetch('/api/prices');
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    if(data.error) throw new Error(data.error);
+
+    // Merge API prices over seed
+    Object.entries(data.prices).forEach(([id,p])=>{
+      if(p && p.history && p.history.length > 0) S.prices[id] = p;
+    });
+    S.fetchedAt = data.fetchedAt;
+
+    setStatus('live','Live · auto-updated');
+    setLastLbl(new Date(data.fetchedAt));
+
+    if(data.nextFetch){
+      const next = new Date(data.nextFetch);
+      document.getElementById('next-lbl').textContent =
+        'Next auto-fetch: ' + next.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+      document.getElementById('sched-sub').textContent =
+        'Netlify runs 1st & 15th each month · IMF PCPS · No manual action needed';
+    }
+    if(force) toast('Prices refreshed from server ✓');
+  }catch(e){
+    console.error('loadPrices error:', e);
+    setStatus('error','Server error — seed data shown');
+    if(force) toast('Could not reach server: ' + e.message);
+  }
+  setSpinner(false);
+  renderAll();
+}
+
+function init(){
+  loadSeed();
+  renderAll();
+  setStatus('loading','Loading…');
+  loadPrices();
+}
+
+function filtered(){
+  return COMMODITIES.filter(c=>{
+    const s=S.sector==='all'||(S.sector==='shared'?c.sectors.includes('shared'):c.sectors.includes(S.sector));
+    const t=S.tag==='all'||c.tag===S.tag;
+    return s&&t;
+  });
+}
+
+function pct1y(c){
+  const p=S.prices[c.id];if(!p)return 0;
+  const h=p.history;
+  const prev=h.length>=13?h[h.length-13]:h[0];
+  return prev?((p.current-prev)/prev*100):0;
+}
+
+function renderAll(){renderSummary();renderGrid();renderDetail();}
+
+function renderSummary(){
+  const f=filtered();
+  const ri=f.filter(c=>pct1y(c)>0.1).length;
+  const fa=f.filter(c=>pct1y(c)<-0.1).length;
+  const al=f.filter(c=>c.alert).length;
+  const mv=f.length?f.reduce((a,b)=>Math.abs(pct1y(a))>Math.abs(pct1y(b))?a:b,f[0]):null;
+  document.getElementById('summary-row').innerHTML=`
+    <div class="s-cell"><div class="s-lbl">Tracking</div><div class="s-val">${f.length}</div><div class="s-sub">commodities</div></div>
+    <div class="s-cell"><div class="s-lbl">Rising (1Y)</div><div class="s-val" style="color:var(--red)">${ri}</div><div class="s-sub">above year-ago</div></div>
+    <div class="s-cell"><div class="s-lbl">Falling (1Y)</div><div class="s-val" style="color:var(--green)">${fa}</div><div class="s-sub">below year-ago</div></div>
+    <div class="s-cell"><div class="s-lbl">Biggest mover</div><div class="s-val" style="color:var(--amber);font-size:13px">${mv?mv.name:'—'}</div><div class="s-sub">${mv?Math.abs(pct1y(mv)).toFixed(1)+'% (1Y)':'—'}</div></div>
+    <div class="s-cell"><div class="s-lbl">Supply alerts</div><div class="s-val" style="color:${al?'var(--amber)':'var(--text3)'}">${al}</div><div class="s-sub">elevated risk</div></div>`;
+}
+
+function tl(t){return{base:'base',specialty:'special.',plastic:'plastic',thermal:'thermal',appliance:'compon.'}[t]||t;}
+
+function renderGrid(){
+  const f=filtered();const g=document.getElementById('grid');
+  if(!f.length){g.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3);background:var(--bg2)">No commodities match the selected filters.</div>';return;}
+  if(!f.find(c=>c.id===S.sel)) S.sel=f[0].id;
+  g.innerHTML=f.map(c=>{
+    const p=S.prices[c.id];
+    const ch=pct1y(c),up=ch>0.1,dn=ch<-0.1;
+    return`<div class="c-card${c.id===S.sel?' sel':''}${c.alert?' alt':''}" onclick="sel('${c.id}')">
+      ${c.alert?'<div class="alert-dot"></div>':''}
+      <div class="card-top"><div class="card-name">${c.name}</div><span class="tag t-${c.tag}">${tl(c.tag)}</span></div>
+      <div class="price-big">${p?p.current.toLocaleString():'—'}</div>
+      <div class="price-unit">${c.unit} <span class="src-dot src-${p?.source||'seed'}" title="${p?.source||'seed'}"></span></div>
+      <div class="chg-row"><div class="chg ${up?'up':dn?'dn':'flat'}">${up?'▲':dn?'▼':'—'} ${Math.abs(ch).toFixed(1)}%</div><span class="chg-lbl">vs 1yr ago</span></div>
+      <div class="spark">${sparkSvg(c)}</div>
+    </div>`;
+  }).join('');
+}
+
+function sparkSvg(c){
+  const p=S.prices[c.id];const d=p?.history||SEED[c.id];
+  const mn=Math.min(...d),mx=Math.max(...d),W=180,H=24;
+  const pts=d.map((v,i)=>{const x=(i/(d.length-1))*W,y=H-((v-mn)/(mx-mn||1))*(H-4)-2;return x.toFixed(1)+','+y.toFixed(1);}).join(' ');
+  const ch=pct1y(c);const col=ch>0.1?'#ef4444':ch<-0.1?'#22c55e':'#4a566a';
+  return`<svg width="100%" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+
+function renderDetail(){
+  const c=COMMODITIES.find(x=>x.id===S.sel);if(!c)return;
+  const p=S.prices[c.id];
+  const hist=p?.history||SEED[c.id];
+  const ch1y=pct1y(c);
+  const pct2y=hist.length>=2?((hist[hist.length-1]-hist[0])/hist[0]*100).toFixed(1):'—';
+  const mx=Math.max(...hist),mn=Math.min(...hist),vol=((mx-mn)/mn*100).toFixed(0);
+  const srcMap={live:'Live — Netlify function · IMF PCPS (LME monthly)',cached:'Cached from last server fetch',seed:'Verified seed data'};
+  document.getElementById('detail').innerHTML=`
+    <div class="det-head">
+      <div><div class="det-title">${c.name}</div><div class="det-meta">${c.unit} · ${srcMap[p?.source||'seed']}</div></div>
+      <div class="range-tabs">
+        <button class="rt${S.range===6?' active':''}" onclick="setRange(6,this)">6M</button>
+        <button class="rt${S.range===12?' active':''}" onclick="setRange(12,this)">1Y</button>
+        <button class="rt${S.range===24?' active':''}" onclick="setRange(24,this)">2Y</button>
+      </div>
+    </div>
+    <div class="chart-wrap"><canvas id="dc"></canvas></div>
+    <div class="kpis">
+      <div class="kpi"><div class="kpi-lbl">Current</div><div class="kpi-val">${p?p.current.toLocaleString():'—'}</div></div>
+      <div class="kpi"><div class="kpi-lbl">1Y change</div><div class="kpi-val" style="color:${ch1y>0?'var(--red)':'var(--green)'}">${ch1y>0?'+':''}${ch1y.toFixed(1)}%</div></div>
+      <div class="kpi"><div class="kpi-lbl">2Y change</div><div class="kpi-val" style="color:${pct2y>0?'var(--red)':'var(--green)'}">${pct2y>0?'+':''}${pct2y}%</div></div>
+      <div class="kpi"><div class="kpi-lbl">2Y high</div><div class="kpi-val">${mx.toLocaleString()}</div></div>
+      <div class="kpi"><div class="kpi-lbl">2Y low</div><div class="kpi-val">${mn.toLocaleString()}</div></div>
+      <div class="kpi"><div class="kpi-lbl">Price band</div><div class="kpi-val" style="color:var(--amber)">${vol}%</div></div>
+    </div>
+    <div class="context">${c.note}</div>`;
+  drawChart(c);
+}
+
+function drawChart(c){
+  const p=S.prices[c.id];const hist=p?.history||SEED[c.id];
+  const n=S.range+1;const slice=hist.slice(-n);const labels=MONTHS.slice(-n);
+  const ch=pct1y(c);
+  const lc=ch>0.1?'#ef4444':ch<-0.1?'#22c55e':'#4f9eff';
+  const fc=ch>0.1?'rgba(239,68,68,.06)':ch<-0.1?'rgba(34,197,94,.06)':'rgba(79,158,255,.06)';
+  const mn=Math.min(...slice),mx=Math.max(...slice),rng=mx-mn;
+  if(S.chart){S.chart.destroy();S.chart=null;}
+  const ctx=document.getElementById('dc')?.getContext('2d');if(!ctx)return;
+  S.chart=new Chart(ctx,{
+    type:'line',
+    data:{labels,datasets:[{data:slice,borderColor:lc,backgroundColor:fc,fill:true,borderWidth:2,pointRadius:0,pointHoverRadius:4,pointHoverBackgroundColor:lc,tension:0.3}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{backgroundColor:'#1e2330',borderColor:'#2e3647',borderWidth:1,titleColor:'#dce3f0',bodyColor:'#7e8fa8',callbacks:{label:ctx=>` ${ctx.parsed.y.toLocaleString()} ${c.unit}`}}},
+      scales:{
+        x:{grid:{color:'#181c2322'},ticks:{color:'#4a566a',font:{size:10,family:"'IBM Plex Mono'"},maxRotation:40,autoSkip:true,maxTicksLimit:9}},
+        y:{grid:{color:'#181c2322'},ticks:{color:'#7e8fa8',font:{size:10,family:"'IBM Plex Mono'"},callback:v=>v>=1000?(v/1000).toFixed(1)+'k':v},min:Math.floor(mn-rng*.08),max:Math.ceil(mx+rng*.08)}
+      }
+    }
+  });
+}
+
+function sel(id){S.sel=id;renderGrid();renderDetail();}
+function setSector(s,b){S.sector=s;document.querySelectorAll('.seg').forEach(x=>x.classList.remove('active'));b.classList.add('active');renderAll();}
+function setTag(t,b){S.tag=t;document.querySelectorAll('.chip').forEach(x=>x.classList.remove('active'));b.classList.add('active');renderAll();}
+function setRange(r,b){S.range=r;document.querySelectorAll('.rt').forEach(x=>x.classList.remove('active'));b.classList.add('active');drawChart(COMMODITIES.find(x=>x.id===S.sel));}
+function setStatus(s,txt){const d=document.getElementById('sdot');d.className='dot';if(s==='live')d.classList.add('live');else if(s==='loading')d.classList.add('loading');else if(s==='error')d.classList.add('error');document.getElementById('stxt').textContent=txt;}
+function setLastLbl(d){document.getElementById('last-lbl').textContent='Updated '+d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});}
+function setSpinner(on){document.getElementById('rbtn').classList.toggle('spin',on);}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3500);}
+function addCalendar(){
+  const url = window.location.href;
+  navigator.clipboard.writeText(url).then(()=>toast('URL copied — share this link with your team ✓'));
+}
+
+init();
+</script>
+</body>
+</html>
