@@ -1,0 +1,12 @@
+[build]
+  publish = "public"
+  functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+
+# Runs every 14 days at 06:00 UTC (biweekly Monday mornings)
+[[scheduled_functions]]
+  function = "fetch-prices"
+  cron = "0 6 1,15 * *"
+  
